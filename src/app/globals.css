@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+:root {
+  --background: #F4F6FB;
+  --foreground: #101828;
+
+  --color-navy-950: #0A1230;
+  --color-navy-900: #0D1B4C;
+  --color-navy-800: #142A63;
+  --color-navy-700: #1B3A82;
+  --color-gold-500: #F2B705;
+  --color-gold-600: #D9A200;
+  --color-surface: #F4F6FB;
+  --color-card: #FFFFFF;
+  --color-border: #E5E9F2;
+  --color-success-50: #EAF8EF;
+  --color-success-600: #16A34A;
+  --color-muted: #64748B;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-navy-950: var(--color-navy-950);
+  --color-navy-900: var(--color-navy-900);
+  --color-navy-800: var(--color-navy-800);
+  --color-navy-700: var(--color-navy-700);
+  --color-gold-500: var(--color-gold-500);
+  --color-gold-600: var(--color-gold-600);
+  --color-surface: var(--color-surface);
+  --color-card: var(--color-card);
+  --color-border: var(--color-border);
+  --color-success-50: var(--color-success-50);
+  --color-success-600: var(--color-success-600);
+  --color-muted: var(--color-muted);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-toast-in {
+  animation: toast-in 0.2s ease-out;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-modal-in {
+  animation: modal-in 0.18s ease-out;
+}
+
+@keyframes status-pop {
+  0% { transform: scale(0.85); opacity: 0.4; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.animate-status-pop {
+  animation: status-pop 0.25s ease-out;
+}
