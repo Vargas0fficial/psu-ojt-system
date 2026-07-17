@@ -1,25 +1,38 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "PSU OJT <onboarding@resend.dev>";
+declare global {
+  var __psuOjtMailTransporter: ReturnType<typeof nodemailer.createTransport> | undefined;
+}
 
-function getResendClient(): Resend {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-        throw new Error(
-            "RESEND_API_KEY is not set. Add it to your .env file — get a free key at https://resend.com."
-        );
-    }
-    return new Resend(apiKey);
+function getTransporter() {
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+
+  if (!user || !pass) {
+    throw new Error(
+      "GMAIL_USER and GMAIL_APP_PASSWORD must be set. Add them to your .env file — " +
+        "see .env.example for how to generate a Gmail App Password."
+    );
+  }
+
+  if (!global.__psuOjtMailTransporter) {
+    global.__psuOjtMailTransporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: { user, pass },
+    });
+  }
+  return global.__psuOjtMailTransporter;
 }
 
 export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
-    const resend = getResendClient();
+  const transporter = getTransporter();
+  const fromAddress = process.env.GMAIL_USER;
 
-    const { error } = await resend.emails.send({
-        from: FROM_EMAIL,
-        to,
-        subject: "Reset your PSU OJT Monitoring System password",
-        html: `
+  await transporter.sendMail({
+    from: `"PSU OJT Monitoring System" <${fromAddress}>`,
+    to,
+    subject: "Reset your PSU OJT Monitoring System password",
+    html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
         <h2 style="color: #0D1B4C;">Reset your password</h2>
         <p>We received a request to reset the password for your PSU OJT Monitoring System account.</p>
@@ -37,9 +50,5 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
         </p>
       </div>
     `,
-    });
-
-    if (error) {
-        throw new Error(`Failed to send email: ${error.message}`);
-    }
+  });
 }
