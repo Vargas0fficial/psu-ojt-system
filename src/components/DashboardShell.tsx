@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
@@ -25,6 +26,8 @@ export function DashboardShell({
   onRetry?: () => void;
   children: React.ReactNode;
 }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   if (error && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface px-4">
@@ -57,9 +60,19 @@ export function DashboardShell({
 
   return (
     <div className="flex min-h-screen bg-surface">
-      <Sidebar role={user.role} onLogout={onLogout} />
+      <Sidebar
+        role={user.role}
+        onLogout={onLogout}
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
+      />
       <div className="flex-1 flex flex-col min-w-0">
-        <Topbar title={title} breadcrumb={breadcrumb} user={user} />
+        <Topbar
+          title={title}
+          breadcrumb={breadcrumb}
+          user={user}
+          onMenuClick={() => setMobileMenuOpen(true)}
+        />
         <main className="flex-1 p-4 sm:p-6">{children}</main>
       </div>
       <ToastStack toasts={toasts} />
