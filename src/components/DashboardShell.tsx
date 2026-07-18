@@ -28,13 +28,37 @@ export function DashboardShell({
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Freeze background scrolling while the mobile drawer is open, so
-  // scrolling inside (or over) the drawer doesn't also scroll the page
-  // behind it.
+ // Freeze background scrolling while the mobile drawer is open. Plain
+  // `overflow: hidden` on <body> does NOT block touch-drag scrolling on iOS
+  // Safari, so we pin the body in place with position:fixed (a well-known
+  // workaround) and restore the exact scroll position when the drawer
+  // closes.
   useEffect(() => {
-    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
+    if (mobileMenuOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.width = "100%";
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY, 10) * -1);
+      }
+    }
+
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
     };
   }, [mobileMenuOpen]);
 
