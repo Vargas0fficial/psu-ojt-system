@@ -123,6 +123,25 @@ export async function updateSupervisorId(
   return users.findOne({ _id: objectId });
 }
 
+/**
+ * Sets the user's OJT start date. Intended to be called the first time a
+ * user creates a time-in log, so their "OJT Start Date" reflects the actual
+ * first day they logged in, rather than staying "Not set" forever.
+ */
+export async function setOjtStartDate(
+  userId: string,
+  logDate: string
+): Promise<UserRecord | null> {
+  const objectId = toObjectId(userId);
+  if (!objectId) return null;
+  const users = await usersCollection();
+  await users.updateOne(
+    { _id: objectId },
+    { $set: { ojtStartDate: logDate } }
+  );
+  return users.findOne({ _id: objectId });
+}
+
 export function toPublicUser(user: UserRecord) {
   return {
     id: user._id.toString(),

@@ -23,7 +23,7 @@ export default function SupervisorDashboardPage() {
       <div className="max-w-6xl mx-auto flex flex-col gap-5">
         <div className="rounded-xl bg-gradient-to-r from-navy-900 to-navy-700 text-white p-5 sm:p-6">
           <p className="text-white/70 text-sm">Welcome back,</p>
-          <h2 className="text-xl sm:text-2xl font-semibold mt-0.5">{user?.name ?? "..."}</h2>
+          <h2 className="text-xl sm:text-2xl font-semibold mt-0.5 break-words">{user?.name ?? "..."}</h2>
           <p className="text-white/60 text-sm mt-1">{user?.department || "OJT Supervisor"}</p>
         </div>
 
