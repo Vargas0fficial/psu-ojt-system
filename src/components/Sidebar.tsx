@@ -8,9 +8,6 @@ import {
   Clock,
   ListChecks,
   BarChart3,
-  UserCircle,
-  Settings,
-  LogOut,
   Users,
   X,
 } from "lucide-react";
@@ -22,26 +19,21 @@ const internNav: NavItem[] = [
   { label: "Time Log", href: "/dashboard/time-log", icon: <Clock className="h-[18px] w-[18px]" /> },
   { label: "My Logs", href: "/dashboard/my-logs", icon: <ListChecks className="h-[18px] w-[18px]" /> },
   { label: "Reports", href: "/dashboard/reports", icon: <BarChart3 className="h-[18px] w-[18px]" /> },
-  { label: "OJT Profile", href: "/dashboard/profile", icon: <UserCircle className="h-[18px] w-[18px]" /> },
-  { label: "Settings", href: "/dashboard/settings", icon: <Settings className="h-[18px] w-[18px]" /> },
 ];
 
 const supervisorNav: NavItem[] = [
   { label: "Dashboard", href: "/supervisor", icon: <LayoutDashboard className="h-[18px] w-[18px]" /> },
   { label: "My Interns", href: "/supervisor/interns", icon: <Users className="h-[18px] w-[18px]" /> },
   { label: "Reports", href: "/supervisor/reports", icon: <BarChart3 className="h-[18px] w-[18px]" /> },
-  { label: "Settings", href: "/supervisor/settings", icon: <Settings className="h-[18px] w-[18px]" /> },
 ];
 
 function SidebarContent({
   role,
-  onLogout,
   onNavigate,
   showCloseButton,
   onClose,
 }: {
   role: "intern" | "supervisor";
-  onLogout: () => void;
   onNavigate?: () => void;
   showCloseButton?: boolean;
   onClose?: () => void;
@@ -92,14 +84,8 @@ function SidebarContent({
         })}
       </nav>
 
-      <div className="px-3 pb-6">
-        <button
-          onClick={onLogout}
-          className="flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors"
-        >
-          <LogOut className="h-[18px] w-[18px]" />
-          Logout
-        </button>
+      <div className="px-6 pb-6 pt-3 border-t border-white/10">
+        <p className="text-[11px] text-white/40 text-center">PSU OJT SYSTEM GROUP3 v1.0 &middot; July 2026</p>
       </div>
     </div>
   );
@@ -107,12 +93,10 @@ function SidebarContent({
 
 export function Sidebar({
   role,
-  onLogout,
   mobileOpen = false,
   onCloseMobile,
 }: {
   role: "intern" | "supervisor";
-  onLogout: () => void;
   mobileOpen?: boolean;
   onCloseMobile?: () => void;
 }) {
@@ -120,7 +104,7 @@ export function Sidebar({
     <>
       {/* Persistent sidebar on desktop/tablet */}
       <aside className="hidden md:flex w-64 shrink-0 min-h-screen">
-        <SidebarContent role={role} onLogout={onLogout} />
+        <SidebarContent role={role} />
       </aside>
 
       {/* Slide-in drawer on mobile */}
@@ -134,7 +118,6 @@ export function Sidebar({
           <div className="absolute inset-y-0 left-0 w-72 max-w-[85%] shadow-2xl animate-modal-in">
             <SidebarContent
               role={role}
-              onLogout={onLogout}
               onNavigate={onCloseMobile}
               showCloseButton
               onClose={onCloseMobile}

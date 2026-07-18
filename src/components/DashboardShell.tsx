@@ -96,7 +96,6 @@ export function DashboardShell({
     <div className="flex min-h-screen bg-surface">
       <Sidebar
         role={user.role}
-        onLogout={onLogout}
         mobileOpen={mobileMenuOpen}
         onCloseMobile={() => setMobileMenuOpen(false)}
       />
@@ -106,6 +105,7 @@ export function DashboardShell({
           breadcrumb={breadcrumb}
           user={user}
           onMenuClick={() => setMobileMenuOpen(true)}
+          onLogout={onLogout}
         />
         <main className="flex-1 p-4 sm:p-6">{children}</main>
       </div>
