@@ -119,7 +119,7 @@ export function Sidebar({
   return (
     <>
       {/* Persistent sidebar on desktop/tablet */}
-      <aside className="hidden md:flex w-64 shrink-0 min-h-screen sticky top-0">
+      <aside className="hidden md:flex w-64 shrink-0 min-h-screen">
         <SidebarContent role={role} onLogout={onLogout} />
       </aside>
 
