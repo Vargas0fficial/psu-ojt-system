@@ -40,6 +40,19 @@ body {
   color: var(--foreground);
 }
 
+/* iOS Safari auto-zooms the page when a focused input's font-size is under
+   16px. Our form inputs use text-sm (14px) for a tighter desktop look, so
+   bump them to 16px specifically on small screens to stop the zoom-in
+   without changing how anything looks on desktop. */
+@media (max-width: 767px) {
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 @keyframes toast-in {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
