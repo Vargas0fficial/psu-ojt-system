@@ -38,6 +38,9 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  /* Stops iOS Safari's rubber-band bounce from revealing this background
+     color at the edges of full-bleed pages like login/register. */
+  overscroll-behavior-y: none;
 }
 
 /* iOS Safari auto-zooms the page when a focused input's font-size is under
