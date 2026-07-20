@@ -28,11 +28,6 @@ export function DashboardShell({
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
- // Freeze background scrolling while the mobile drawer is open. Plain
-  // `overflow: hidden` on <body> does NOT block touch-drag scrolling on iOS
-  // Safari, so we pin the body in place with position:fixed (a well-known
-  // workaround) and restore the exact scroll position when the drawer
-  // closes.
   useEffect(() => {
     if (mobileMenuOpen) {
       const scrollY = window.scrollY;
@@ -93,7 +88,7 @@ export function DashboardShell({
   }
 
   return (
-    <div className="flex min-h-screen bg-surface">
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar
         role={user.role}
         mobileOpen={mobileMenuOpen}

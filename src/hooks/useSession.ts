@@ -13,6 +13,7 @@ export type SessionUser = {
   requiredHours: number;
   ojtStartDate: string | null;
   supervisorId: string | null;
+  avatar: string | null;
 };
 
 export function useSession(redirectIfUnauthenticated = true) {
@@ -27,10 +28,6 @@ export function useSession(redirectIfUnauthenticated = true) {
     try {
       const res = await fetch("/api/auth/me");
 
-      // A non-OK response from a crashed API route (e.g. DB connection
-      // failure) often comes back as an HTML error page, not JSON. Guard
-      // against that instead of letting res.json() throw and leaving the
-      // caller stuck on a spinner forever.
       const contentType = res.headers.get("content-type") ?? "";
       if (!contentType.includes("application/json")) {
         throw new Error(`Server returned ${res.status} (not JSON) — check your API/DB setup.`);

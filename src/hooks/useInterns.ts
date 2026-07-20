@@ -11,6 +11,7 @@ export type InternSummary = {
   course: string | null;
   requiredHours: number;
   ojtStartDate: string | null;
+  avatar: string | null;
   totalHoursLabel: string;
   totalMinutes: number;
   logsThisWeek: number;

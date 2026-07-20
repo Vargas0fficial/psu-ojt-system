@@ -7,6 +7,7 @@ import { useInterns } from "@/hooks/useInterns";
 import { useToast } from "@/components/Toast";
 import { DashboardShell } from "@/components/DashboardShell";
 import { LogTable } from "@/components/LogTable";
+import { Avatar } from "@/components/Avatar";
 import { api } from "@/lib/api-client";
 import type { LogRow } from "@/lib/types";
 import { ArrowLeft } from "lucide-react";
@@ -94,9 +95,7 @@ function InternsContent() {
                                 className="flex items-center justify-between py-3.5 hover:bg-surface/60 -mx-2 px-2 rounded-lg transition-colors text-left"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 rounded-full bg-navy-900 text-white flex items-center justify-center text-sm font-semibold">
-                                        {intern.name.charAt(0)}
-                                    </div>
+                                    <Avatar name={intern.name} avatar={intern.avatar} size={40} className="text-sm" />
                                     <div>
                                         <p className="text-sm font-medium text-gray-900">{intern.name}</p>
                                         <p className="text-xs text-muted">{intern.course || "OJT Trainee"} &middot; {intern.email}</p>

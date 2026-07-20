@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronDown, Menu, UserCircle, Settings, LogOut } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { SessionUser } from "@/hooks/useSession";
+import { Avatar } from "./Avatar";
 
 function useNow() {
   const [now, setNow] = useState<Date | null>(null);
@@ -86,9 +87,7 @@ export function Topbar({
             aria-haspopup="menu"
             aria-expanded={menuOpen}
           >
-            <div className="h-9 w-9 rounded-full bg-navy-800 text-white flex items-center justify-center text-sm font-semibold shrink-0">
-              {user?.name?.charAt(0) ?? "?"}
-            </div>
+            <Avatar name={user?.name ?? "?"} avatar={user?.avatar} size={36} className="text-sm" />
             <div className="hidden sm:block leading-tight text-left">
               <p className="text-sm font-medium text-gray-900">{user?.name ?? "..."}</p>
               <p className="text-xs text-muted capitalize">{user?.role ?? ""}</p>

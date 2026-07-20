@@ -5,6 +5,7 @@ import { useSession } from "@/hooks/useSession";
 import { useLogs } from "@/hooks/useLogs";
 import { useToast } from "@/components/Toast";
 import { DashboardShell } from "@/components/DashboardShell";
+import { AvatarUpload } from "@/components/AvatarUpload";
 import { formatDateLabel } from "@/lib/time";
 import { api } from "@/lib/api-client";
 
@@ -59,9 +60,12 @@ export default function ProfilePage() {
       <div className="max-w-3xl mx-auto flex flex-col gap-5">
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-4 mb-6">
-            <div className="h-16 w-16 rounded-full bg-navy-900 text-white flex items-center justify-center text-xl font-semibold">
-              {user?.name?.charAt(0) ?? "?"}
-            </div>
+            <AvatarUpload
+              name={user?.name ?? ""}
+              avatar={user?.avatar ?? null}
+              onChange={refresh}
+              onResult={showToast}
+            />
             <div>
               <h3 className="text-base font-semibold text-gray-900">{user?.name}</h3>
               <p className="text-sm text-muted">{user?.course || "OJT Trainee"}</p>

@@ -14,6 +14,7 @@ export type UserRecord = {
   requiredHours: number;
   ojtStartDate: string | null;
   supervisorId: ObjectId | null;
+  avatar: string | null;
   createdAt: Date;
 };
 
@@ -65,6 +66,7 @@ export async function createUser(input: NewUserInput): Promise<UserRecord> {
     requiredHours: input.requiredHours ?? 486,
     ojtStartDate: input.ojtStartDate ?? null,
     supervisorId: toObjectId(input.supervisorId ?? null),
+    avatar: null,
     createdAt: new Date(),
   };
   const result = await users.insertOne(doc as UserRecord);
@@ -84,10 +86,6 @@ export async function listInternsForSupervisor(supervisorId: string): Promise<Us
   const objectId = toObjectId(supervisorId);
   if (!objectId) return [];
   const users = await usersCollection();
-  // Match supervisorId whether it was stored as a real ObjectId (current,
-  // correct behavior) or accidentally saved as a plain string at some point
-  // (e.g. from an older code path) — keeps existing data working without
-  // needing a manual DB fix.
   return users
     .find({
       role: "intern",
@@ -123,23 +121,18 @@ export async function updateSupervisorId(
   return users.findOne({ _id: objectId });
 }
 
-/**
- * Sets the user's OJT start date. Intended to be called the first time a
- * user creates a time-in log, so their "OJT Start Date" reflects the actual
- * first day they logged in, rather than staying "Not set" forever.
- */
-export async function setOjtStartDate(
-  userId: string,
-  logDate: string
-): Promise<UserRecord | null> {
+export async function setOjtStartDate(userId: string, ojtStartDate: string): Promise<void> {
   const objectId = toObjectId(userId);
-  if (!objectId) return null;
+  if (!objectId) return;
   const users = await usersCollection();
-  await users.updateOne(
-    { _id: objectId },
-    { $set: { ojtStartDate: logDate } }
-  );
-  return users.findOne({ _id: objectId });
+  await users.updateOne({ _id: objectId }, { $set: { ojtStartDate } });
+}
+
+export async function updateAvatar(userId: string, avatar: string | null): Promise<void> {
+  const objectId = toObjectId(userId);
+  if (!objectId) return;
+  const users = await usersCollection();
+  await users.updateOne({ _id: objectId }, { $set: { avatar } });
 }
 
 export function toPublicUser(user: UserRecord) {
@@ -153,5 +146,6 @@ export function toPublicUser(user: UserRecord) {
     requiredHours: user.requiredHours,
     ojtStartDate: user.ojtStartDate,
     supervisorId: user.supervisorId ? user.supervisorId.toString() : null,
+    avatar: user.avatar ?? null,
   };
 }
