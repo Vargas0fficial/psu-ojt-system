@@ -1,3 +1,5 @@
+export type ApprovalStatus = "pending" | "approved" | "flagged";
+
 export type LogRow = {
   id: string;
   user_id: string;
@@ -7,6 +9,9 @@ export type LogRow = {
   remarks: string | null;
   status: "Time In" | "Completed";
   duration: string;
+  approvalStatus: ApprovalStatus;
+  supervisorRemark: string | null;
+  reviewedAt: string | Date | null;
 };
 
 export type LogsSummary = {

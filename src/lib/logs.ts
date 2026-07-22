@@ -3,6 +3,7 @@ import { getDb, ensureMigrated } from "./db";
 import { toObjectId } from "./users";
 
 export type LogStatus = "Time In" | "Completed";
+export type ApprovalStatus = "pending" | "approved" | "flagged";
 
 export type LogRecord = {
   _id: ObjectId;
@@ -13,6 +14,9 @@ export type LogRecord = {
   remarks: string | null;
   status: LogStatus;
   createdAt: Date;
+  approvalStatus?: ApprovalStatus;
+  supervisorRemark?: string | null;
+  reviewedAt?: Date | null;
 };
 
 function parseTimeToMinutes(time: string): number {
@@ -141,6 +145,28 @@ export async function findLogById(logId: string): Promise<LogRecord | null> {
   return logs.findOne({ _id: objectId });
 }
 
+export async function reviewLog(
+  logId: string,
+  approvalStatus: ApprovalStatus,
+  supervisorRemark: string | null
+): Promise<LogRecord | null> {
+  const objectId = toObjectId(logId);
+  if (!objectId) return null;
+
+  const logs = await logsCollection();
+  await logs.updateOne(
+    { _id: objectId },
+    {
+      $set: {
+        approvalStatus,
+        supervisorRemark,
+        reviewedAt: new Date(),
+      },
+    }
+  );
+  return logs.findOne({ _id: objectId });
+}
+
 export async function listLogsForUser(userId: string, limit = 100): Promise<LogRecord[]> {
   const objectId = toObjectId(userId);
   if (!objectId) return [];
@@ -212,5 +238,8 @@ export function toPublicLog(log: LogRecord) {
     remarks: log.remarks,
     status: log.status,
     duration: computeDurationLabel(log.timeIn, log.timeOut),
+    approvalStatus: log.approvalStatus ?? "pending",
+    supervisorRemark: log.supervisorRemark ?? null,
+    reviewedAt: log.reviewedAt ?? null,
   };
 }
