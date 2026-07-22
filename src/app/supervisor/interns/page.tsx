@@ -7,9 +7,10 @@ import { useInterns } from "@/hooks/useInterns";
 import { useToast } from "@/components/Toast";
 import { DashboardShell } from "@/components/DashboardShell";
 import { LogTable } from "@/components/LogTable";
+import { ReviewLogModal } from "@/components/ReviewLogModal";
 import { Avatar } from "@/components/Avatar";
 import { api } from "@/lib/api-client";
-import type { LogRow } from "@/lib/types";
+import type { LogRow, ApprovalStatus } from "@/lib/types";
 import { ArrowLeft } from "lucide-react";
 
 type InternLogsResponse = {
@@ -27,6 +28,19 @@ function InternsContent() {
 
     const [detail, setDetail] = useState<InternLogsResponse | null>(null);
     const [detailLoading, setDetailLoading] = useState(false);
+    const [reviewingLog, setReviewingLog] = useState<LogRow | null>(null);
+
+    async function loadDetail() {
+        if (!internId) return;
+        setDetailLoading(true);
+        const res = await api.get<InternLogsResponse>(`/api/supervisor/logs?internId=${internId}`);
+        setDetailLoading(false);
+        if (res.success) {
+            setDetail(res.data);
+        } else {
+            showToast(res.error, "error");
+        }
+    }
 
     /* eslint-disable react-hooks/set-state-in-effect -- sync detail panel to the selected intern query param */
     useEffect(() => {
@@ -34,18 +48,32 @@ function InternsContent() {
             setDetail(null);
             return;
         }
-        setDetailLoading(true);
-        api.get<InternLogsResponse>(`/api/supervisor/logs?internId=${internId}`).then((res) => {
-            setDetailLoading(false);
-            if (res.success) {
-                setDetail(res.data);
-            } else {
-                showToast(res.error, "error");
-            }
-        });
+        loadDetail();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [internId]);
     /* eslint-enable react-hooks/set-state-in-effect */
+
+    async function handleSaveReview(approvalStatus: ApprovalStatus, remark: string) {
+        if (!reviewingLog) return;
+        const res = await api.patch(`/api/supervisor/logs/${reviewingLog.id}`, {
+            approvalStatus,
+            supervisorRemark: remark,
+        });
+        if (!res.success) {
+            showToast(res.error, "error");
+            return;
+        }
+        showToast(
+            approvalStatus === "approved"
+                ? "Log approved."
+                : approvalStatus === "flagged"
+                    ? "Log flagged."
+                    : "Review reset.",
+            "success"
+        );
+        setReviewingLog(null);
+        await loadDetail();
+    }
 
     if (internId) {
         return (
@@ -67,12 +95,24 @@ function InternsContent() {
                             <p className="text-sm text-muted mb-4">
                                 {detail.intern.course || "OJT Trainee"} &middot; {detail.intern.email}
                             </p>
-                            <LogTable logs={detail.logs} emptyMessage="This intern has no logged hours yet." />
+                            <LogTable
+                                logs={detail.logs}
+                                showApproval
+                                onReview={setReviewingLog}
+                                emptyMessage="This intern has no logged hours yet."
+                            />
                         </div>
                     ) : (
                         <p className="text-sm text-muted py-8 text-center">Intern not found.</p>
                     )}
                 </div>
+
+                <ReviewLogModal
+                    open={Boolean(reviewingLog)}
+                    log={reviewingLog}
+                    onClose={() => setReviewingLog(null)}
+                    onSave={handleSaveReview}
+                />
             </DashboardShell>
         );
     }

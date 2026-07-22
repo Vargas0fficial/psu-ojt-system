@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock3, CalendarCheck2, BadgeCheck, LogIn, LogOut } from "lucide-react";
+import { Clock3, CalendarCheck2, BadgeCheck, LogIn, LogOut, AlertTriangle } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
 import { useLogs } from "@/hooks/useLogs";
 import { useToast } from "@/components/Toast";
@@ -10,6 +10,7 @@ import { LogTable } from "@/components/LogTable";
 import { SuccessModal } from "@/components/SuccessModal";
 import { useState } from "react";
 import Link from "next/link";
+import { todayDateString } from "@/lib/time";
 
 export default function DashboardPage() {
   const { user, logout, error, refresh } = useSession();
@@ -21,6 +22,8 @@ export default function DashboardPage() {
 
   const todayLog = summary?.todayLog ?? null;
   const isTimedIn = todayLog && todayLog.status === "Time In";
+  const today = todayDateString();
+  const incompleteLogs = logs.filter((l) => l.status === "Time In" && l.log_date !== today);
 
   async function handleTimeIn() {
     setBusy(true);
@@ -57,11 +60,28 @@ export default function DashboardPage() {
       <div className="max-w-6xl mx-auto flex flex-col gap-5">
         <div className="rounded-xl bg-gradient-to-r from-navy-900 to-navy-700 text-white p-5 sm:p-6">
           <p className="text-white/70 text-sm">Welcome back,</p>
-         <h2 className="text-xl sm:text-2xl font-semibold mt-0.5 break-words">{user?.name ?? "..."}</h2>
+          <h2 className="text-xl sm:text-2xl font-semibold mt-0.5 break-words">{user?.name ?? "..."}</h2>
           <p className="text-white/60 text-sm mt-1">
             {user?.course ?? "OJT Trainee"} &middot; OJT Trainee
           </p>
         </div>
+
+        {incompleteLogs.length > 0 && (
+          <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+            <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
+            <p className="text-sm text-red-700 flex-1">
+              You have {incompleteLogs.length} log{incompleteLogs.length > 1 ? "s" : ""} with a
+              Time In but no Time Out. Please fix{" "}
+              {incompleteLogs.length > 1 ? "them" : "it"} in My Logs.
+            </p>
+            <Link
+              href="/dashboard/my-logs"
+              className="text-sm font-medium text-red-700 hover:underline shrink-0"
+            >
+              Fix now &rarr;
+            </Link>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
