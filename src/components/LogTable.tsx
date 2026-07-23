@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Pencil, Trash2, AlertTriangle, MessageSquareText } from "lucide-react";
 import { StatusBadge } from "./StatCard";
+import { Modal } from "./Modal";
 import { formatDateLabel, todayDateString } from "@/lib/time";
 import type { LogRow, ApprovalStatus } from "@/lib/types";
 
@@ -42,6 +44,7 @@ export function LogTable({
 }) {
   const editable = Boolean(onEdit || onDelete || onReview);
   const today = todayDateString();
+  const [viewingRemark, setViewingRemark] = useState<LogRow | null>(null);
 
   if (logs.length === 0) {
     return <p className="text-sm text-muted py-8 text-center">{emptyMessage}</p>;
@@ -90,9 +93,14 @@ export function LogTable({
                     <div className="flex items-center gap-1.5">
                       <ApprovalBadge status={log.approvalStatus} />
                       {log.supervisorRemark && (
-                        <span title={log.supervisorRemark}>
-                          <MessageSquareText className="h-3.5 w-3.5 text-gray-400" />
-                        </span>
+                        <button
+                          onClick={() => setViewingRemark(log)}
+                          className="p-0.5 rounded text-gray-400 hover:text-navy-800 hover:bg-navy-900/5"
+                          aria-label="View supervisor comment"
+                          title="View comment"
+                        >
+                          <MessageSquareText className="h-3.5 w-3.5" />
+                        </button>
                       )}
                     </div>
                   </td>
@@ -134,6 +142,21 @@ export function LogTable({
           })}
         </tbody>
       </table>
+
+      <Modal open={Boolean(viewingRemark)} onClose={() => setViewingRemark(null)} widthClass="max-w-sm">
+        {viewingRemark && (
+          <>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-sm font-semibold text-gray-900">Supervisor Comment</h2>
+              <ApprovalBadge status={viewingRemark.approvalStatus} />
+            </div>
+            <p className="text-xs text-muted mb-3">{formatDateLabel(viewingRemark.log_date)}</p>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap rounded-lg bg-surface p-3">
+              {viewingRemark.supervisorRemark}
+            </p>
+          </>
+        )}
+      </Modal>
     </div>
   );
 }
