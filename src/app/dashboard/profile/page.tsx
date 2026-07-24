@@ -59,15 +59,15 @@ export default function ProfilePage() {
     <DashboardShell user={user} title="OJT Profile" breadcrumb="Dashboard > OJT Profile" onLogout={logout} toasts={toasts} error={error} onRetry={refresh}>
       <div className="max-w-3xl mx-auto flex flex-col gap-5">
         <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
             <AvatarUpload
               name={user?.name ?? ""}
               avatar={user?.avatar ?? null}
               onChange={refresh}
               onResult={showToast}
             />
-            <div>
-              <h3 className="text-base font-semibold text-gray-900">{user?.name}</h3>
+            <div className="min-w-0">
+              <h3 className="text-base font-semibold text-gray-900 break-words">{user?.name}</h3>
               <p className="text-sm text-muted">{user?.course || "OJT Trainee"}</p>
             </div>
           </div>

@@ -11,7 +11,7 @@ import {
   formatMinutesLabel,
   toPublicLog,
 } from "@/lib/logs";
-import { findUserById, setOjtStartDate } from "@/lib/users";
+import { findUserById } from "@/lib/users";
 
 export async function GET() {
   const session = await getSession();
@@ -57,12 +57,6 @@ export async function POST(req: NextRequest) {
   const existing = await findOpenLogForToday(session.id, logDate);
   if (existing && existing.status === "Time In") {
     return fail("You already have an open time-in for this date. Please time out first.", 409);
-  }
-
-  // Set the user's OJT start date the first time they ever time in.
-  const user = await findUserById(session.id);
-  if (user && !user.ojtStartDate) {
-    await setOjtStartDate(session.id, logDate);
   }
 
   const log = await createTimeInLog(session.id, logDate, timeIn, remarks);

@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { getDb, ensureMigrated } from "./db";
+import { getDb, ensureMigrated, withRetry } from "./db";
 
 export type UserRole = "intern" | "supervisor";
 
@@ -43,68 +43,86 @@ async function usersCollection() {
 }
 
 export async function findUserByEmail(email: string): Promise<UserRecord | null> {
-  const users = await usersCollection();
-  return users.findOne({ email: email.toLowerCase() });
+  return withRetry(async () => {
+    const users = await usersCollection();
+    return users.findOne({ email: email.toLowerCase() });
+  });
 }
 
 export async function findUserById(id: string): Promise<UserRecord | null> {
   const objectId = toObjectId(id);
   if (!objectId) return null;
-  const users = await usersCollection();
-  return users.findOne({ _id: objectId });
+  return withRetry(async () => {
+    const users = await usersCollection();
+    return users.findOne({ _id: objectId });
+  });
 }
 
 export async function createUser(input: NewUserInput): Promise<UserRecord> {
-  const users = await usersCollection();
-  const doc: Omit<UserRecord, "_id"> = {
-    name: input.name,
-    email: input.email.toLowerCase(),
-    passwordHash: input.passwordHash,
-    role: input.role,
-    course: input.course ?? null,
-    department: input.department ?? null,
-    requiredHours: input.requiredHours ?? 486,
-    ojtStartDate: input.ojtStartDate ?? null,
-    supervisorId: toObjectId(input.supervisorId ?? null),
-    avatar: null,
-    createdAt: new Date(),
-  };
-  const result = await users.insertOne(doc as UserRecord);
-  return { ...doc, _id: result.insertedId };
+  return withRetry(async () => {
+    const users = await usersCollection();
+    const doc: Omit<UserRecord, "_id"> = {
+      name: input.name,
+      email: input.email.toLowerCase(),
+      passwordHash: input.passwordHash,
+      role: input.role,
+      course: input.course ?? null,
+      department: input.department ?? null,
+      requiredHours: input.requiredHours ?? 486,
+      ojtStartDate: input.ojtStartDate ?? null,
+      supervisorId: toObjectId(input.supervisorId ?? null),
+      avatar: null,
+      createdAt: new Date(),
+    };
+    const result = await users.insertOne(doc as UserRecord);
+    return { ...doc, _id: result.insertedId };
+  });
 }
 
 export async function listSupervisors(): Promise<{ id: string; name: string }[]> {
-  const users = await usersCollection();
-  const rows = await users
-    .find({ role: "supervisor" }, { projection: { name: 1 } })
-    .sort({ name: 1 })
-    .toArray();
-  return rows.map((u) => ({ id: u._id.toString(), name: u.name }));
+  return withRetry(async () => {
+    const users = await usersCollection();
+    const rows = await users
+      .find({ role: "supervisor" }, { projection: { name: 1 } })
+      .sort({ name: 1 })
+      .toArray();
+    return rows.map((u) => ({ id: u._id.toString(), name: u.name }));
+  });
 }
 
 export async function listInternsForSupervisor(supervisorId: string): Promise<UserRecord[]> {
   const objectId = toObjectId(supervisorId);
   if (!objectId) return [];
-  const users = await usersCollection();
-  return users
-    .find({
-      role: "intern",
-      $or: [{ supervisorId: objectId }, { supervisorId: supervisorId as unknown as ObjectId }],
-    })
-    .sort({ name: 1 })
-    .toArray();
+  return withRetry(async () => {
+    const users = await usersCollection();
+    // Match supervisorId whether it was stored as a real ObjectId (current,
+    // correct behavior) or accidentally saved as a plain string at some point
+    // (e.g. from an older code path) — keeps existing data working without
+    // needing a manual DB fix.
+    return users
+      .find({
+        role: "intern",
+        $or: [{ supervisorId: objectId }, { supervisorId: supervisorId as unknown as ObjectId }],
+      })
+      .sort({ name: 1 })
+      .toArray();
+  });
 }
 
 export async function listAllInterns(): Promise<UserRecord[]> {
-  const users = await usersCollection();
-  return users.find({ role: "intern" }).sort({ name: 1 }).toArray();
+  return withRetry(async () => {
+    const users = await usersCollection();
+    return users.find({ role: "intern" }).sort({ name: 1 }).toArray();
+  });
 }
 
 export async function updatePasswordHash(userId: string, passwordHash: string): Promise<void> {
   const objectId = toObjectId(userId);
   if (!objectId) return;
-  const users = await usersCollection();
-  await users.updateOne({ _id: objectId }, { $set: { passwordHash } });
+  await withRetry(async () => {
+    const users = await usersCollection();
+    await users.updateOne({ _id: objectId }, { $set: { passwordHash } });
+  });
 }
 
 export async function updateSupervisorId(
@@ -113,26 +131,49 @@ export async function updateSupervisorId(
 ): Promise<UserRecord | null> {
   const objectId = toObjectId(userId);
   if (!objectId) return null;
-  const users = await usersCollection();
-  await users.updateOne(
-    { _id: objectId },
-    { $set: { supervisorId: toObjectId(supervisorId) } }
-  );
-  return users.findOne({ _id: objectId });
+  return withRetry(async () => {
+    const users = await usersCollection();
+    await users.updateOne(
+      { _id: objectId },
+      { $set: { supervisorId: toObjectId(supervisorId) } }
+    );
+    return users.findOne({ _id: objectId });
+  });
 }
 
-export async function setOjtStartDate(userId: string, ojtStartDate: string): Promise<void> {
+export async function updateOjtStartDate(
+  userId: string,
+  ojtStartDate: string | null
+): Promise<UserRecord | null> {
   const objectId = toObjectId(userId);
-  if (!objectId) return;
-  const users = await usersCollection();
-  await users.updateOne({ _id: objectId }, { $set: { ojtStartDate } });
+  if (!objectId) return null;
+  return withRetry(async () => {
+    const users = await usersCollection();
+    await users.updateOne({ _id: objectId }, { $set: { ojtStartDate } });
+    return users.findOne({ _id: objectId });
+  });
+}
+
+export async function updateRequiredHours(
+  userId: string,
+  requiredHours: number
+): Promise<UserRecord | null> {
+  const objectId = toObjectId(userId);
+  if (!objectId) return null;
+  return withRetry(async () => {
+    const users = await usersCollection();
+    await users.updateOne({ _id: objectId }, { $set: { requiredHours } });
+    return users.findOne({ _id: objectId });
+  });
 }
 
 export async function updateAvatar(userId: string, avatar: string | null): Promise<void> {
   const objectId = toObjectId(userId);
   if (!objectId) return;
-  const users = await usersCollection();
-  await users.updateOne({ _id: objectId }, { $set: { avatar } });
+  await withRetry(async () => {
+    const users = await usersCollection();
+    await users.updateOne({ _id: objectId }, { $set: { avatar } });
+  });
 }
 
 export function toPublicUser(user: UserRecord) {

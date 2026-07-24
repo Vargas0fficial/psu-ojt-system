@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { ok, fail } from "@/lib/api-response";
 import { getSession } from "@/lib/auth";
-import { findUserById, toPublicUser, updateSupervisorId } from "@/lib/users";
+import { findUserById, toPublicUser, updateSupervisorId, updateRequiredHours } from "@/lib/users";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -15,6 +15,12 @@ export async function POST(req: NextRequest) {
     const supervisor = await findUserById(supervisorId);
     if (!supervisor || supervisor.role !== "supervisor") {
       return fail("Selected supervisor was not found.", 404);
+    }
+    // Adopt this supervisor's required-hours target for the intern's
+    // program, so "goal hours to finish" reflects whichever supervisor
+    // they're now under.
+    if (supervisor.requiredHours) {
+      await updateRequiredHours(session.id, supervisor.requiredHours);
     }
   }
 

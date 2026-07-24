@@ -10,7 +10,7 @@ function createClient(): MongoClient {
   if (!uri) {
     throw new Error(
       "MONGODB_URI is not set. Add it to your .env file (see .env.example) — " +
-        "point it at a MongoDB Atlas cluster (or a local MongoDB instance)."
+      "point it at a MongoDB Atlas cluster (or a local MongoDB instance)."
     );
   }
   return new MongoClient(uri, {
@@ -26,6 +26,11 @@ async function connect(): Promise<MongoClient> {
   return global.__psuOjtMongoClient.connect();
 }
 
+/**
+ * Reuses a single connection (and in-flight connect promise) across dev hot
+ * reloads and across calls within the same server process, instead of
+ * opening a new connection per request.
+ */
 function getClient(): Promise<MongoClient> {
   if (!global.__psuOjtMongoConnect) {
     global.__psuOjtMongoConnect = connect().catch((err) => {
@@ -56,14 +61,20 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function getDb(): Promise<Db> {
+/**
+ * Runs any async DB operation, retrying a couple of times on transient
+ * network failures (dropped connections, timeouts) — not just the initial
+ * connect. Wrap every collection.find()/insertOne()/updateOne() etc. call
+ * with this in lib/users.ts and lib/logs.ts for resilience against flaky
+ * networks (e.g. restrictive office WiFi that resets connections mid-query).
+ */
+export async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
   const delays = [1000, 3000];
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= delays.length; attempt++) {
     try {
-      const client = await getClient();
-      return client.db();
+      return await fn();
     } catch (err) {
       lastError = err;
       if (attempt < delays.length && isRetryableError(err)) {
@@ -75,6 +86,18 @@ export async function getDb(): Promise<Db> {
   }
 
   throw lastError;
+}
+
+/**
+ * Returns the app's database, retrying a couple of times on transient
+ * connection failures. Use this at the top of every lib/*.ts data-access
+ * function instead of calling MongoClient directly.
+ */
+export async function getDb(): Promise<Db> {
+  return withRetry(async () => {
+    const client = await getClient();
+    return client.db();
+  });
 }
 
 let migrated: Promise<void> | null = null;
@@ -107,6 +130,7 @@ async function migrate() {
     .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 }
 
+/** Ensures indexes/collections exist before the first query runs. Safe to call repeatedly. */
 export function ensureMigrated(): Promise<void> {
   if (!migrated) migrated = migrate();
   return migrated;
